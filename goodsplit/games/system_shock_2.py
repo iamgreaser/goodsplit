@@ -67,6 +67,14 @@ class SystemShock2Reactor(Reactor):
             ],
         )
 
+    @classmethod
+    def get_game_title(cls) -> str:
+        return "System Shock 2"
+
+    @classmethod
+    def get_game_key(cls) -> str:
+        return "system_shock_2"
+
     def on_event(self, ts: List[float], ev: Event) -> None:
         time_str = self.convert_times_to_str(ts)
 

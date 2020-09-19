@@ -33,6 +33,11 @@ class TimeBase(metaclass=ABCMeta):
     """A way of keeping time."""
     __slots__ = ()
 
+    @classmethod
+    def get_time_base_key(cls) -> str:
+        """Gets the unique identifier of this time base."""
+        return f"{cls.__module__}:{cls.__name__}"
+
     @abstractmethod
     def fetch_time(self) -> float:
         """Gets the time of right now."""

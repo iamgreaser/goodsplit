@@ -15,7 +15,6 @@ Because of that, you don't need to come up with your own splits or work out what
 Once these are all done I'm putting a proper version on this.
 
 * GUI
-* Actually saving runs and tracking them and the other kinda important stuff
 * Use argparse to parse arguments
 
 ## Other TODO

@@ -7,6 +7,9 @@ from typing import Dict
 from typing import List
 from typing import Optional
 
+import sqlite3
+
+from .db import DB
 from .interface import Event
 from .interface import EventSource
 from .interface import TimeBase
@@ -17,10 +20,15 @@ LOG = logging.getLogger("reactor")
 class Reactor:
     """The thing that takes care of all the stuff and things."""
     __slots__ = (
+        "_active_game_id",
+        "_active_run_id",
+        "_active_time_base_ids",
+        "_db",
         "_event_sources",
         "_fuse_splits",
         "_is_stopped",
         "_last_time_str",
+        "_sql_conn",
         "_time_bases",
         "_time_invalid",
         "_time_load_start",
@@ -34,6 +42,33 @@ class Reactor:
         self._last_time_str: str = "--TODO-SET-TIME--"
         self._fuse_splits: Dict[str, List[float]] = {}
         self._time_load_start: Optional[List[float]] = None
+
+        self._db = DB()
+
+        self._active_game_id = self._db.ensure_game_id(
+            game_key=self.get_game_key(),
+            game_title=self.get_game_title(),
+        )
+        self._active_time_base_ids = [
+            self._db.ensure_time_base_id(
+                game_id=self._active_game_id,
+                type_key=tb.get_time_base_key(),
+            )
+            for tb in time_bases
+        ]
+        self._active_run_id: Optional[int] = None
+
+    @classmethod
+    @abstractmethod
+    def get_game_title(cls) -> str:
+        """Gets the title of this game."""
+        raise NotImplementedError()
+
+    @classmethod
+    @abstractmethod
+    def get_game_key(cls) -> str:
+        """Gets the unique identifier of this game."""
+        raise NotImplementedError()
 
     def update(self) -> None:
         """Updates the reactor."""
@@ -79,9 +114,14 @@ class Reactor:
         """Starts a new run."""
         for tb in self._time_bases:
             tb.reset_to_zero()
+
+        self._active_run_id = self._db.create_run_id(
+            game_id=self._active_game_id,
+        )
         self._time_load_start = None
         self._is_stopped = False
         self._time_invalid = False
+
         LOG.info("Run started!")
 
     def finish_run(self) -> None:
@@ -89,6 +129,7 @@ class Reactor:
         self._time_load_start = None
         self._is_stopped = True
         LOG.info("Run finished!")
+        self._active_run_id = None
 
     def cancel_run(self) -> None:
         """Cancels the current run."""
@@ -97,16 +138,35 @@ class Reactor:
         self._time_load_start = None
         self._is_stopped = True
         self._time_invalid = True
+        self._active_run_id = None
         LOG.info("Run cancelled.")
 
     def do_fuse_split(self, ts: List[float], split_id: str) -> None:
         """Adds a fuse split if we haven't blown the fuse already."""
+        if self._active_run_id is None:
+            LOG.warn(f"Attempted to add a fuse split {split_id!r} when no run available!")
+            return
         if split_id in self._fuse_splits:
             return
 
         # Blow the fuse and make a split!
         self._fuse_splits[split_id] = list(ts)
         LOG.info(f"Fuse split {self.convert_times_to_str(ts)}: {split_id!r}")
+        fuse_split_type_id = self._db.ensure_fuse_split_type(
+            game_id=self._active_game_id,
+            type_key=split_id,
+        )
+        split_db_id = self._db.create_split_id(
+            run_id=self._active_run_id,
+            fuse_split_type_id=fuse_split_type_id,
+        )
+        for secs, time_base_id in zip(ts, self._active_time_base_ids):
+            value_microseconds = int(math.floor(secs*1000000))
+            time_stamp_id = self._db.create_time_stamp_id(
+                split_id=split_db_id,
+                time_base_id=time_base_id,
+                value_microseconds=value_microseconds,
+            )
 
     def start_loading(self, ts: List[float]) -> None:
         """Start a loading period for load removal."""
