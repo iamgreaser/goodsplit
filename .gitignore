@@ -1,0 +1,11 @@
+# Python
+**/__pycache__/**
+**/.mypy_cache/**
+**/*.egg-info/**
+*.pyc
+*.pyo
+*.pyz
+
+# VIM
+.sw?
+.*.sw?
