@@ -30,6 +30,7 @@ Once these are all done I'm putting a proper version on this.
 ## Other TODO
 
 * Basic customisation
+  * GUI themes
 * Load removal (well, it's partially implemented)
 * Log regex API
 * Memory reading API (cross-platform)

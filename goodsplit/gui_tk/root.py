@@ -27,7 +27,9 @@ class TkGuiRoot(tkinter.Tk):
     def __init__(self, *, args: Sequence[str]) -> None:
         super().__init__()
         self.title("Game Setup - Goodsplit")
+        self.configure(background="#000000")
         self._db = DB()
+        self._init_styles()
         self._init_fonts()
         self._init_widgets()
         self._active_windows: List[tkinter.Toplevel] = []
@@ -35,6 +37,38 @@ class TkGuiRoot(tkinter.Tk):
     def run(self) -> None:
         """Runs the main loop."""
         self.mainloop()
+
+    def _init_styles(self) -> None:
+        """Initialises all the styles used."""
+        # TODO: Toplevel, and button mouseover colours
+        # TODO: Make dialogues not look terrible
+        self._styles = tkinter.ttk.Style()
+        self._styles.configure(
+            "TButton",
+            background="#000033",
+            foreground="#CCCCFF",
+        )
+        # Not a thing
+        #self._styles.configure(
+        #    "Listbox",
+        #    background="#333355",
+        #    foreground="#CCCCFF",
+        #)
+        self._styles.configure(
+            "TCombobox",
+            fieldbackground="#333355",
+            foreground="#CCCCFF",
+        )
+        self._styles.configure(
+            "TEntry",
+            fieldbackground="#333355",
+            foreground="#CCCCFF",
+        )
+        self._styles.configure(
+            "TLabel",
+            background="#000000",
+            foreground="#CCCCCC",
+        )
 
     def _init_fonts(self) -> None:
         """Initialises all the fonts used."""
@@ -63,12 +97,14 @@ class TkGuiRoot(tkinter.Tk):
         self.font_default.configure(
             family=sans_family,
             size=self.font_size,
+            weight=tkinter.font.BOLD,
         )
 
         self.font_entry = tkinter.font.nametofont("TkTextFont")
         self.font_entry.configure(
             family=mono_family,
             size=self.font_size,
+            weight=tkinter.font.BOLD,
         )
 
     def _init_widgets(self) -> None:

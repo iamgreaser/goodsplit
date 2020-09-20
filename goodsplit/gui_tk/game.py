@@ -17,6 +17,7 @@ class TkGameWindow(tkinter.Toplevel):
     """A game window."""
     def __init__(self, *, game_key: str, game_root_dir: str, game_user_dir: str) -> None:
         super().__init__()
+        self.configure(background="#000000")
         self._is_dead = False
         self.protocol("WM_DELETE_WINDOW", self.on_close)
         self._game_key = game_key
@@ -44,6 +45,8 @@ class TkGameWindow(tkinter.Toplevel):
         """Initialises all the widgets in this window."""
         self.grid()
         self.columnconfigure(index=0, weight=1)
+
+        self._split_row_count = 10
 
         row = 0
 

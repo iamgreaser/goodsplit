@@ -6,6 +6,7 @@ from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
 
 import sqlite3
 
@@ -28,6 +29,7 @@ class Reactor:
         "_fuse_splits",
         "_is_stopped",
         "_last_time_str",
+        "_ordered_fuse_splits",
         "_sql_conn",
         "_time_bases",
         "_time_invalid",
@@ -41,6 +43,7 @@ class Reactor:
         self._time_invalid = True
         self._last_time_str: str = "--TODO-SET-TIME--"
         self._fuse_splits: Dict[str, List[float]] = {}
+        self._ordered_fuse_splits: List[Tuple[List[float], str]] = []
         self._time_load_start: Optional[List[float]] = None
 
         self._db = DB()
@@ -69,6 +72,17 @@ class Reactor:
     def get_game_key(cls) -> str:
         """Gets the unique identifier of this game."""
         raise NotImplementedError()
+
+    def get_ordered_fuse_splits(self) -> List[Tuple[List[float], str]]:
+        """
+        Gets an ordered list of the current activated fuse splits.
+
+        Returns a list of ([ts0, ...], split_id,).
+        """
+        return list(map(
+            (lambda t: (list(t[0]), t[1],)),
+            self._ordered_fuse_splits,
+        ))
 
     def update(self) -> None:
         """Updates the reactor."""
@@ -112,9 +126,6 @@ class Reactor:
 
     def start_run(self) -> None:
         """Starts a new run."""
-        for tb in self._time_bases:
-            tb.reset_to_zero()
-
         self._active_run_id = self._db.create_run_id(
             game_id=self._active_game_id,
         )
@@ -122,11 +133,16 @@ class Reactor:
         self._is_stopped = False
         self._time_invalid = False
 
-        if not self._is_stopped:
-            self.do_fuse_split(
-                ts=[tb.fetch_time() for tb in self._time_bases],
-                split_id="$system:start",
-            )
+        self._fuse_splits = {}
+        self._ordered_fuse_splits = []
+
+        for tb in self._time_bases:
+            tb.reset_to_zero()
+
+        self.do_fuse_split(
+            ts=[tb.fetch_time() for tb in self._time_bases],
+            split_id="$system:start",
+        )
 
         LOG.info("Run started!")
 
@@ -139,8 +155,8 @@ class Reactor:
             )
         self._time_load_start = None
         self._is_stopped = True
-        LOG.info("Run finished!")
         self._active_run_id = None
+        LOG.info("Run finished!")
 
     def cancel_run(self) -> None:
         """Cancels the current run."""
@@ -155,6 +171,8 @@ class Reactor:
         self._is_stopped = True
         self._time_invalid = True
         self._active_run_id = None
+        self._fuse_splits = {}
+        self._ordered_fuse_splits = []
         LOG.info("Run cancelled.")
 
     def do_fuse_split(self, ts: List[float], split_id: str) -> None:
@@ -167,6 +185,7 @@ class Reactor:
 
         # Blow the fuse and make a split!
         self._fuse_splits[split_id] = list(ts)
+        self._ordered_fuse_splits.append((list(ts), split_id,))
         LOG.info(f"Fuse split {self.convert_times_to_str(ts)}: {split_id!r}")
         fuse_split_type_id = self._db.ensure_fuse_split_type(
             game_id=self._active_game_id,
