@@ -122,10 +122,21 @@ class Reactor:
         self._is_stopped = False
         self._time_invalid = False
 
+        if not self._is_stopped:
+            self.do_fuse_split(
+                ts=[tb.fetch_time() for tb in self._time_bases],
+                split_id="$system:start",
+            )
+
         LOG.info("Run started!")
 
     def finish_run(self) -> None:
         """Finishes a successful run."""
+        if not self._is_stopped:
+            self.do_fuse_split(
+                ts=[tb.fetch_time() for tb in self._time_bases],
+                split_id="$system:finish",
+            )
         self._time_load_start = None
         self._is_stopped = True
         LOG.info("Run finished!")
@@ -133,6 +144,11 @@ class Reactor:
 
     def cancel_run(self) -> None:
         """Cancels the current run."""
+        if not self._is_stopped:
+            self.do_fuse_split(
+                ts=[tb.fetch_time() for tb in self._time_bases],
+                split_id="$system:cancel",
+            )
         for tb in self._time_bases:
             tb.reset_to_zero()
         self._time_load_start = None

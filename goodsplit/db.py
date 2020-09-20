@@ -4,7 +4,7 @@ from pathlib import Path
 
 import sqlite3
 
-LOG = logging.getLogger("reactor")
+LOG = logging.getLogger("db")
 
 class DB:
     """A Goodsplit SQLite 3 database handle."""
@@ -33,7 +33,9 @@ class DB:
                 CREATE TABLE IF NOT EXISTS games (
                     id INTEGER NOT NULL PRIMARY KEY ASC ON CONFLICT ROLLBACK AUTOINCREMENT,
                     type_key TEXT NOT NULL UNIQUE,
-                    title TEXT NOT NULL UNIQUE
+                    title TEXT NOT NULL UNIQUE,
+                    game_root_dir TEXT NOT NULL DEFAULT '',
+                    game_user_dir TEXT NOT NULL DEFAULT ''
                 );
             """)
 
@@ -349,5 +351,71 @@ class DB:
             result = int(row[0])
             self._sql_conn.commit()
             return result
+        finally:
+            C.close()
+
+    def get_game_root_dir(self, *, game_id: int) -> str:
+        """Gets the root dir for the game."""
+        C = self._sql_conn.cursor()
+        try:
+            C.execute("""
+                SELECT game_root_dir FROM games WHERE id = ? LIMIT 1
+            """, [
+                game_id
+            ])
+
+            # Did we get a row?
+            row = C.fetchone()
+            # Well, we got a row, or something went horribly wrong
+            result = row[0]
+            assert isinstance(result, str)
+            return result
+        finally:
+            C.close()
+
+    def get_game_user_dir(self, *, game_id: int) -> str:
+        """Gets the user dir for the game."""
+        C = self._sql_conn.cursor()
+        try:
+            C.execute("""
+                SELECT game_user_dir FROM games WHERE id = ? LIMIT 1
+            """, [
+                game_id
+            ])
+
+            # Did we get a row?
+            row = C.fetchone()
+            # Well, we got a row, or something went horribly wrong
+            result = row[0]
+            assert isinstance(result, str)
+            return result
+        finally:
+            C.close()
+
+    def set_game_root_dir(self, *, game_id: int, game_root_dir: str) -> None:
+        """Sets the root dir for the game."""
+        C = self._sql_conn.cursor()
+        try:
+            C.execute("""
+                UPDATE games SET game_root_dir = ? WHERE id = ?
+            """, [
+                game_root_dir,
+                game_id
+            ])
+            self._sql_conn.commit()
+        finally:
+            C.close()
+
+    def set_game_user_dir(self, *, game_id: int, game_user_dir: str) -> None:
+        """Sets the user dir for the game."""
+        C = self._sql_conn.cursor()
+        try:
+            C.execute("""
+                UPDATE games SET game_user_dir = ? WHERE id = ?
+            """, [
+                game_user_dir,
+                game_id
+            ])
+            self._sql_conn.commit()
         finally:
             C.close()

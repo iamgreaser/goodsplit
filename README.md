@@ -6,7 +6,11 @@ Because of that, you don't need to come up with your own splits or work out what
 
 # Games supported
 
-* System Shock 2 (inotify)
+## Linux only
+
+* System Shock 2 (win32, uses inotify)
+
+## Multiplatform
 
 # TODOs
 
@@ -14,14 +18,22 @@ Because of that, you don't need to come up with your own splits or work out what
 
 Once these are all done I'm putting a proper version on this.
 
-* GUI
+* Show splits on GUI
+* Compare splits
+
+## Cleanup TODO
+
+* Clean up the database handling and stuff
 * Use argparse to parse arguments
+* Don't instantly close everything when someone presses the X button on the root window
 
 ## Other TODO
 
 * Basic customisation
 * Load removal (well, it's partially implemented)
+* Log regex API
 * Memory reading API (cross-platform)
 * Plugins for games
+* Visual autosplitting API (using OpenCV)
 * Windows support
 
