@@ -84,6 +84,15 @@ class Reactor:
             self._ordered_fuse_splits,
         ))
 
+    def is_time_invalid(self) -> bool:
+        """Is the time invalid?"""
+        return self._time_invalid
+
+    def fetch_time_now(self) -> List[float]:
+        """Fetch all time now."""
+        time_now = [tb.fetch_time() for tb in self._time_bases]
+        return time_now
+
     def update(self) -> None:
         """Updates the reactor."""
         time_now = [tb.fetch_time() for tb in self._time_bases]

@@ -65,6 +65,11 @@ class TkGuiRoot(tkinter.Tk):
             foreground="#CCCCFF",
         )
         self._styles.configure(
+            "TFrame",
+            background="#000000",
+            foreground="#CCCCCC",
+        )
+        self._styles.configure(
             "TLabel",
             background="#000000",
             foreground="#CCCCCC",
@@ -105,6 +110,13 @@ class TkGuiRoot(tkinter.Tk):
             family=mono_family,
             size=self.font_size,
             weight=tkinter.font.BOLD,
+        )
+
+        self.font_fixed = tkinter.font.nametofont("TkFixedFont")
+        self.font_fixed.configure(
+            family=mono_family,
+            size=self.font_size,
+            #weight=tkinter.font.BOLD,
         )
 
     def _init_widgets(self) -> None:

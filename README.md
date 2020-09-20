@@ -18,14 +18,14 @@ Because of that, you don't need to come up with your own splits or work out what
 
 Once these are all done I'm putting a proper version on this.
 
-* Show splits on GUI
-* Compare splits
+* Compare past splits
 
 ## Cleanup TODO
 
 * Clean up the database handling and stuff
-* Use argparse to parse arguments
 * Don't instantly close everything when someone presses the X button on the root window
+* Only update splits on GUI when they've changed
+* Use argparse to parse arguments
 
 ## Other TODO
 
