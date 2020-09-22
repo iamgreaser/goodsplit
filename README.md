@@ -22,7 +22,6 @@ Once these are all done I'm putting a proper version on this.
 
 ## Cleanup TODO
 
-* Clean up the database handling and stuff
 * Don't instantly close everything when someone presses the X button on the root window
 * Only update splits on GUI when they've changed
 * Use argparse to parse arguments
