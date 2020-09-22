@@ -13,6 +13,9 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/iamgreaser/goodsplit",
     packages=setuptools.find_packages(),
+    install_requires=[
+        "sqlalchemy",
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Zlib License",
