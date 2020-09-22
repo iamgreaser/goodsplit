@@ -2,9 +2,12 @@ import datetime
 import logging
 from pathlib import Path
 
+import sqlalchemy
 import sqlalchemy.engine.url
 
 LOG = logging.getLogger("db")
+
+from . import schema
 
 class DB:
     """A Goodsplit SQLite 3 database handle."""
@@ -24,111 +27,8 @@ class DB:
         self._prepare_sql_schema()
 
     def _prepare_sql_schema(self) -> None:
-        # Set up our tables
-        with self._sql_engine.connect() as C:
-            #
-            # Firstly, we have our game.
-            #
-
-            # Games (has key)
-            LOG.info(f"Ensuring games table")
-            C.execute("""
-                CREATE TABLE IF NOT EXISTS games (
-                    id INTEGER NOT NULL PRIMARY KEY ASC ON CONFLICT ROLLBACK AUTOINCREMENT,
-                    type_key TEXT NOT NULL UNIQUE,
-                    title TEXT NOT NULL UNIQUE,
-                    game_root_dir TEXT NOT NULL DEFAULT '',
-                    game_user_dir TEXT NOT NULL DEFAULT ''
-                );
-            """)
-
-            #
-            # A game has time bases and fuse split types.
-            #
-
-            # Time bases (ref: Game) (has key)
-            LOG.info(f"Ensuring time_bases table")
-            C.execute("""
-                CREATE TABLE IF NOT EXISTS time_bases (
-                    id INTEGER NOT NULL PRIMARY KEY ASC ON CONFLICT ROLLBACK AUTOINCREMENT,
-                    game_id INTEGER NOT NULL REFERENCES games(id),
-                    type_key TEXT NOT NULL
-                );
-            """)
-            C.execute("""
-                CREATE UNIQUE INDEX IF NOT EXISTS
-                    time_bases_unique_game_id_type_key
-                    ON time_bases(game_id, type_key);
-            """)
-
-            # Fuse split types (ref: Game) (has key)
-            LOG.info(f"Ensuring fuse_split_types table")
-            C.execute("""
-                CREATE TABLE IF NOT EXISTS fuse_split_types (
-                    id INTEGER NOT NULL PRIMARY KEY ASC ON CONFLICT ROLLBACK AUTOINCREMENT,
-                    game_id INTEGER NOT NULL REFERENCES games(id),
-                    type_key TEXT NOT NULL
-                );
-            """)
-            C.execute("""
-                CREATE UNIQUE INDEX IF NOT EXISTS
-                    fuse_split_types_unique_game_id_type_key
-                    ON time_bases(game_id, type_key);
-            """)
-
-            #
-            # A game also has runs.
-            #
-
-            # Runs (ref: Game)
-            LOG.info(f"Ensuring runs table")
-            C.execute("""
-                CREATE TABLE IF NOT EXISTS runs (
-                    id INTEGER NOT NULL PRIMARY KEY ASC ON CONFLICT ROLLBACK AUTOINCREMENT,
-                    game_id INTEGER NOT NULL REFERENCES games(id),
-                    run_start_datetime TEXT NOT NULL
-                );
-            """)
-            C.execute("""
-                CREATE UNIQUE INDEX IF NOT EXISTS
-                    runs_unique_game_id_run_start_datetime
-                    ON runs(game_id, run_start_datetime);
-            """)
-
-            #
-            # With a run and a few time bases, we need to assign times to splits.
-            #
-
-            # Fuse splits (ref: Run) (ref: Fuse split type)
-            LOG.info(f"Ensuring splits table")
-            C.execute("""
-                CREATE TABLE IF NOT EXISTS splits (
-                    id INTEGER NOT NULL PRIMARY KEY ASC ON CONFLICT ROLLBACK AUTOINCREMENT,
-                    run_id INTEGER NOT NULL REFERENCES runs(id),
-                    fuse_split_type_id INTEGER NOT NULL REFERENCES fuse_split_types(id)
-                );
-            """)
-            C.execute("""
-                CREATE UNIQUE INDEX IF NOT EXISTS
-                    fuse_splits_unique_run_id_fuse_split_type_id
-                    ON splits(run_id, fuse_split_type_id);
-            """)
-
-            # Time stamps (ref: Split) (ref: Time base)
-            LOG.info(f"Ensuring time_stamps table")
-            C.execute("""
-                CREATE TABLE IF NOT EXISTS time_stamps (
-                    id INTEGER NOT NULL PRIMARY KEY ASC ON CONFLICT ROLLBACK AUTOINCREMENT,
-                    split_id INTEGER NOT NULL REFERENCES splits(id),
-                    time_base_id INTEGER NOT NULL REFERENCES time_bases(id),
-                    value_microseconds INT8 NOT NULL
-                );
-            """)
-            C.execute("""
-                CREATE UNIQUE INDEX IF NOT EXISTS
-                    time_stamps_unique_split_id_time_base_id
-                    ON time_stamps(split_id, time_base_id);
-            """)
+        """Creates all of the tables in our database if they don't exist already."""
+        schema.metadata.create_all(self._sql_engine)
 
     def fetch_timestamp_now(self) -> str:
         """Fetches a timestamp of now in ISO format with microseconds."""

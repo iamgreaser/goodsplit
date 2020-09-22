@@ -120,7 +120,11 @@ class TkGameWindow(tkinter.Toplevel):
     def on_close(self) -> None:
         LOG.info(f"Closing window for {self._game_key}")
         self._is_dead = True
-        self._reactor.cancel_run()
+        try:
+            self._reactor.cancel_run()
+        except Exception as e:
+            LOG.exception(e)
+            # Otherwise let it through
         self.destroy() # type: ignore
 
     def on_tick(self) -> None:
