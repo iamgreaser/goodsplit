@@ -142,8 +142,12 @@ class TkGameWindow(tkinter.Toplevel):
                 subsecs = int(math.floor(time_secs*10))
                 subs = subsecs % 10
                 secs = (subsecs // 10) % 60
-                mins = (subsecs // 10) // 60
-                time_str = f"{mins:02d}:{secs:02d}.{subs:01d}"
+                mins = ((subsecs // 10) // 60) % 60
+                hours = ((subsecs // 10) // 60) // 60
+                if hours != 0:
+                    time_str = f"{hours:d}:{mins:02d}:{secs:02d}.{subs:01d}"
+                else:
+                    time_str = f"{mins:02d}:{secs:02d}.{subs:01d}"
                 self._split_labels_time[i].configure(text=time_str)
 
             for i in range(len(ordered_fuses)+1, self._split_row_count, 1):
